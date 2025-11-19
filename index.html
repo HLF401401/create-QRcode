@@ -81,6 +81,16 @@
             transition: border-color 0.3s;
         }
         
+        /* 核心样式：默认状态下文本灰色虚化 */
+        .qr-input-default {
+            color: #999; /* 灰色虚化效果 */
+        }
+        
+        /* 输入状态下文本黑色 */
+        .qr-input-active {
+            color: #333;
+        }
+        
         textarea:focus {
             outline: none;
             border-color: #2575fc;
@@ -210,13 +220,14 @@
     <div class="container">
         <header>
             <h1>二维码生成器</h1>
-            <p class="subtitle">输入文本或URL，立即生成二维码</p >
+            <p class="subtitle">输入文本或URL，立即生成二维码</p>
         </header>
         
         <div class="content">
             <div class="input-section">
                 <label for="qr-text">输入文本或URL：</label>
-                <textarea id="qr-text" placeholder="请输入要生成二维码的文本或URL...">https://example.com</textarea>
+                <!-- 初始状态带默认值+虚化类 -->
+                <textarea id="qr-text" class="qr-input-default">https://example.com</textarea>
                 
                 <div class="examples">
                     <div class="example-btn" data-text="https://www.google.com">Google</div>
@@ -231,7 +242,7 @@
             <div class="qr-section">
                 <h3>生成的二维码：</h3>
                 <div id="qrcode">
-                    <p class="status-message">二维码将显示在这里</p >
+                    <p class="status-message"></p>
                 </div>
                 <button class="download-btn" id="download" disabled>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -245,7 +256,7 @@
     </div>
     
     <footer>
-        <p>使用 QRCode.js 库生成二维码 | 在VSCode中可直接使用</p >
+        <p>使用 QRCode.js 库生成二维码 | 在VSCode中可直接使用</p>
     </footer>
 
     <script>
@@ -257,6 +268,7 @@
             const exampleBtns = document.querySelectorAll('.example-btn');
             
             let qrcode = null;
+            let isDefaultText = true; // 标记是否是默认文本
             
             // 初始化二维码生成器
             function initQRCode() {
@@ -295,13 +307,33 @@
                     console.log('二维码生成成功!');
                 } catch (error) {
                     console.error('生成二维码时出错:', error);
-                    qrcodeContainer.innerHTML = '<p class="status-message">生成二维码时出错，请重试</p >';
+                    qrcodeContainer.innerHTML = '<p class="status-message">生成二维码时出错，请重试</p>';
                     downloadBtn.disabled = true;
                     
                     // 重新初始化
                     qrcode = null;
                 }
             }
+            
+            // 核心逻辑：输入框点击事件（清空默认值）
+            qrText.addEventListener('focus', function() {
+                if (isDefaultText) {
+                    this.value = ''; // 点击立即清空默认值
+                    this.classList.remove('qr-input-default');
+                    this.classList.add('qr-input-active');
+                    isDefaultText = false;
+                }
+            });
+            
+            // 辅助逻辑：失去焦点时恢复默认值（若为空）
+            qrText.addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    this.value = 'https://example.com';
+                    this.classList.remove('qr-input-active');
+                    this.classList.add('qr-input-default');
+                    isDefaultText = true;
+                }
+            });
             
             // 生成按钮点击事件
             generateBtn.addEventListener('click', generateQRCode);
@@ -310,6 +342,9 @@
             exampleBtns.forEach(btn => {
                 btn.addEventListener('click', function() {
                     qrText.value = this.getAttribute('data-text');
+                    qrText.classList.remove('qr-input-default');
+                    qrText.classList.add('qr-input-active');
+                    isDefaultText = false;
                     generateQRCode();
                 });
             });
